@@ -1,26 +1,20 @@
 import os
 from pprint import pprint
-from collections import namedtuple
 
-import pandas as pd
-from parse import *
 from contest import solve
-
-FlightEntry = namedtuple("FlightEntry", "id timestamp")
 
 
 def load(data):
-    n = int(data[0])
-    template = "{id:d} {timestamp:d}"
-    flights = [FlightEntry(**parse(template, line).named) for line in data[1:]]
+    transfer_range = float(data[0])
+    flights = list(map(int, data[2:]))
 
     return {
-        "n": n, "flights": flights
+        "transfer_range": transfer_range, "flights": flights
     }
 
 
 if __name__ == "__main__":
-    level, quests = 4, 5
+    level, quests = 5, 5
     for q in range(1, quests + 1):
         input_file = r'..\data\level{0}\level{0}_{1}.in'.format(level, q)
         output_file = os.path.splitext(input_file)[0] + ".out"
