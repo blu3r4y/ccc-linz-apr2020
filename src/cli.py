@@ -5,12 +5,12 @@ from collections import namedtuple
 from parse import *
 from contest import solve
 
-FlightEntry = namedtuple("FlightEntry", "timestamp lat long altitude start destination takeoff")
+FlightEntry = namedtuple("FlightEntry", "lat long altitude")
 
 
 def load(data):
     n = int(data[0])
-    template = "{timestamp:d},{lat:f},{long:f},{altitude:f},{start:w},{destination:w},{takeoff:d}"
+    template = "{lat:f},{long:f},{altitude:f}"
     flights = [FlightEntry(**parse(template, line).named) for line in data[1:]]
 
     return {
@@ -20,7 +20,7 @@ def load(data):
 
 
 if __name__ == "__main__":
-    level, quests = 2, 5
+    level, quests = 3, 5
     for q in range(1, quests + 1):
         input_file = r'..\data\level{0}\level{0}_{1}.in'.format(level, q)
         output_file = os.path.splitext(input_file)[0] + ".out"
