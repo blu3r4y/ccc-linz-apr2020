@@ -1,38 +1,40 @@
-import pandas as pd
 import numpy as np
-
-import pyproj
-from pyproj.crs.datum import CustomDatum, CustomEllipsoid
+import pandas as pd
+from util import load_trace
 
 
 def solve(data):
     flights = data["flights"]
 
-    df = pd.DataFrame(flights)
-
     s = ""
-    for i, row in df.iterrows():
-        x, y, z = gps_to_ecef(row["lat"], row["long"], row["altitude"])
-        s += f"{x} {y} {z}\n"
+
+    for flight in flights:
+        trace = load_trace(flight.id)
+        df = pd.DataFrame(trace["traces"], dtype=np.float32)
+        df.sort_values("offset", inplace=True)  # ensure sorted
+
+        value = flight.timestamp - trace["takeoff"]
+
+        # check direct match
+        if np.any(df["offset"] == value):
+            lat, long, alt = df[df["offset"] == value].iloc[0, :][["lat", "long", "alt"]]
+            s += f"{lat} {long} {alt}\n"
+        else:
+            # find nearest timestamps
+            off1, lat1, long1, alt1 = df[df["offset"] < value].iloc[-1, :][["offset", "lat", "long", "alt"]]
+            off2, lat2, long2, alt2 = df[df["offset"] > value].iloc[0, :][["offset", "lat", "long", "alt"]]
+
+            lat = interp(value, [off1, off2], [lat1, lat2])
+            long = interp(value, [off1, off2], [long1, long2])
+            alt = interp(value, [off1, off2], [alt1, alt2])
+
+            s += f"{lat} {long} {alt}\n"
 
     return s
 
 
-def gps_to_ecef(latitude, longitude, altitude):
-    # perfect sphere
-    R, f = 6371000, 0
-
-    cosLat = np.cos(latitude * np.pi / 180)
-    sinLat = np.sin(latitude * np.pi / 180)
-
-    cosLong = np.cos(longitude * np.pi / 180)
-    sinLong = np.sin(longitude * np.pi / 180)
-
-    c = 1 / np.sqrt(cosLat * cosLat + (1 - f) * (1 - f) * sinLat * sinLat)
-    s = (1 - f) * (1 - f) * c
-
-    x = (R * c + altitude) * cosLat * cosLong
-    y = (R * c + altitude) * cosLat * sinLong
-    z = (R * s + altitude) * sinLat
-
-    return x, y, z
+def interp(x, xs, ys):
+    x = float(x)
+    x0, x1 = xs
+    y0, y1 = ys
+    return y0 + (x - x0) * ((y1 - y0) / (x1 - x0))
