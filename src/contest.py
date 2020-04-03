@@ -1,15 +1,17 @@
+import pandas as pd
+
+
 def solve(data):
     flights = data["flights"]
 
-    minTimestamp = min([f.timestamp for f in flights])
-    maxTimestamp = max([f.timestamp for f in flights])
-    minLat = min([f.lat for f in flights])
-    maxLat = max([f.lat for f in flights])
-    minLong = min([f.long for f in flights])
-    maxLong = max([f.long for f in flights])
-    maxAltitude = max([f.altitude for f in flights])
+    df = pd.DataFrame(flights)
 
-    return f"{minTimestamp:.0f} {maxTimestamp:.0f}\n" + \
-           f"{minLat} {maxLat}\n" + \
-           f"{minLong} {maxLong}\n" + \
-           f"{maxAltitude}\n"
+    # ensure unique
+    df.drop_duplicates(["start", "destination", "takeoff"], inplace=True)
+    # group by start, dest and count
+    groups = df.groupby(["start", "destination"]).size().reset_index(name="counts")
+    # sort by start, then by dest
+    groups.sort_values(by=["start", "destination"], inplace=True)
+
+    lines = [f"{row['start']} {row['destination']} {row['counts']}" for i, row in groups.iterrows()]
+    return "\n".join(lines)
