@@ -21,3 +21,11 @@ Package requirements are specified in the [requirements.txt](requirements.txt) f
 ```
 pip3 install -r requirements.txt
 ```
+
+## Snippets
+
+Quickly archive the last commit
+
+```
+git archive --format zip -o level1.zip HEAD
+```
